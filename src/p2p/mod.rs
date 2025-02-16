@@ -1,6 +1,8 @@
 use std::io::{self, ErrorKind};
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
+use std::thread;
+use std::time::Duration;
 use tokio::io::Interest;
 use tokio::net::{TcpSocket, TcpStream};
 
@@ -38,6 +40,7 @@ impl P2PTalker {
                 .unwrap();
 
             if ready.is_readable() {
+                thread::sleep(Duration::from_millis(100));
                 let mut data = vec![0; 1024];
                 // Try to read data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
