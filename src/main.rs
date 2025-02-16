@@ -30,8 +30,13 @@ async fn main() {
     let c_lock = Arc::clone(&msg);
     thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(100));
+
+        let mut msg = match c_lock.try_write() {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
         io::stdin()
-            .read_line(&mut c_lock.try_write().unwrap())
+            .read_line(&mut msg)
             .expect("error: unable to read user input");
     });
 

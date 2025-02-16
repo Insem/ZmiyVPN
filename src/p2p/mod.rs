@@ -14,6 +14,7 @@ impl P2PTalker {
             .parse::<SocketAddr>()
             .unwrap()
             .into();
+        socket.set_reuseaddr(true).unwrap();
         socket.bind(bind_str).unwrap();
         let stream = socket
             .connect(
