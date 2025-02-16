@@ -57,8 +57,11 @@ impl P2PTalker {
                 // Try to write data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
                 // let mut msg = "xuy".to_string();
-
-                match self.stream.try_write(msg.try_read().unwrap().as_bytes()) {
+                let msg = match msg.try_read() {
+                    Ok(v) => v,
+                    Err(_) => continue,
+                };
+                match self.stream.try_write(msg.as_bytes()) {
                     Ok(n) => {
                         println!("write {} bytes", n);
                     }
