@@ -35,14 +35,14 @@ impl P2PTalker {
                 .ready(Interest::READABLE | Interest::WRITABLE)
                 .await
                 .unwrap();
-            println!("--Ready {:?}", ready);
+
             if ready.is_readable() {
                 let mut data = vec![0; 1024];
                 // Try to read data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
                 match self.stream.try_read(&mut data) {
                     Ok(_n) => {
-                        println!("read {} bytes", String::from_utf8_lossy(data.as_slice()));
+                        println!("Собеседник: {}", String::from_utf8_lossy(data.as_slice()));
                     }
                     Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
                         continue;
