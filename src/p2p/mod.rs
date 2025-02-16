@@ -33,6 +33,7 @@ impl P2PTalker {
 
     pub async fn talk(&mut self, msg: Arc<RwLock<String>>) -> io::Result<()> {
         loop {
+            thread::sleep(Duration::from_millis(2000));
             let ready = self
                 .stream
                 .ready(Interest::READABLE | Interest::WRITABLE)
@@ -40,7 +41,6 @@ impl P2PTalker {
                 .unwrap();
 
             if ready.is_readable() {
-                thread::sleep(Duration::from_millis(100));
                 let mut data = vec![0; 1024];
                 // Try to read data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
