@@ -1,5 +1,6 @@
-use std::io::{self, ErrorKind, Read, Write};
+use std::io::{self, ErrorKind};
 use std::net::SocketAddr;
+use std::sync::{Arc, RwLock};
 use tokio::io::Interest;
 use tokio::net::{TcpSocket, TcpStream};
 
@@ -27,21 +28,21 @@ impl P2PTalker {
         P2PTalker { stream }
     }
 
-    pub async fn talk(&mut self) -> io::Result<()> {
+    pub async fn talk(&mut self, msg: Arc<RwLock<String>>) -> io::Result<()> {
         loop {
             let ready = self
                 .stream
                 .ready(Interest::READABLE | Interest::WRITABLE)
                 .await
                 .unwrap();
-
+            println!("--Ready {:?}", ready);
             if ready.is_readable() {
                 let mut data = vec![0; 1024];
                 // Try to read data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
                 match self.stream.try_read(&mut data) {
-                    Ok(n) => {
-                        println!("read {} bytes", n);
+                    Ok(_n) => {
+                        println!("read {} bytes", String::from_utf8_lossy(data.as_slice()));
                     }
                     Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
                         continue;
@@ -55,12 +56,9 @@ impl P2PTalker {
             if ready.is_writable() {
                 // Try to write data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
-                let mut msg = String::new();
-                io::stdin()
-                    .read_line(&mut msg)
-                    .expect("error: unable to read user input");
+                // let mut msg = "xuy".to_string();
 
-                match self.stream.try_write(msg.as_bytes()) {
+                match self.stream.try_write(msg.try_read().unwrap().as_bytes()) {
                     Ok(n) => {
                         println!("write {} bytes", n);
                     }

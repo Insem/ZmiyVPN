@@ -1,5 +1,10 @@
 use p2p::P2PTalker;
-use std::path::PathBuf;
+use std::{
+    io,
+    sync::{Arc, RwLock},
+    thread,
+    time::Duration,
+};
 use structopt::StructOpt;
 
 mod client;
@@ -21,6 +26,15 @@ async fn main() {
         bind_port,
     } = Opt::from_args();
 
+    let msg = Arc::new(RwLock::new(String::new()));
+    let c_lock = Arc::clone(&msg);
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_millis(100));
+        io::stdin()
+            .read_line(&mut c_lock.try_write().unwrap())
+            .expect("error: unable to read user input");
+    });
+
     let mut p2p = P2PTalker::new(dst_addr, dst_port, bind_port).await;
-    p2p.talk().await.unwrap();
+    p2p.talk(msg).await.unwrap();
 }
