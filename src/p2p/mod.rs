@@ -45,8 +45,10 @@ impl P2PTalker {
                 // Try to read data, this may still fail with `WouldBlock`
                 // if the readiness event is a false positive.
                 match self.stream.try_read(&mut data) {
-                    Ok(_n) => {
+                    Ok(n) => {
+                        data.truncate(n);
                         println!("Собеседник: {}", String::from_utf8_lossy(data.as_slice()));
+                        continue;
                     }
                     Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
                         continue;
