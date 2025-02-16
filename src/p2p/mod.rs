@@ -62,9 +62,7 @@ impl P2PTalker {
                     Err(_) => continue,
                 };
                 match self.stream.try_write(msg.as_bytes()) {
-                    Ok(n) => {
-                        println!("write {} bytes", n);
-                    }
+                    Ok(_) => {}
                     Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
                     Err(e) => {
                         return Err(e.into());
