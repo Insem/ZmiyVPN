@@ -35,6 +35,7 @@ async fn main() {
             Ok(v) => v,
             Err(_) => continue,
         };
+        msg.clear();
         io::stdin()
             .read_line(&mut msg)
             .expect("error: unable to read user input");
