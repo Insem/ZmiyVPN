@@ -1,3 +1,4 @@
+use clap::Parser;
 use p2p::P2PTalker;
 use std::{
     io,
@@ -5,14 +6,13 @@ use std::{
     thread,
     time::Duration,
 };
-use structopt::StructOpt;
 
 mod client;
 mod p2p;
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "example", about = "An example of StructOpt usage.")]
-struct Opt {
+/// Simple program to greet a person
+#[derive(Parser, Debug)]
+struct Args {
     dst_addr: String,
     dst_port: usize,
     bind_port: usize,
@@ -20,11 +20,11 @@ struct Opt {
 
 #[tokio::main]
 async fn main() {
-    let Opt {
+    let Args {
         dst_port,
         dst_addr,
         bind_port,
-    } = Opt::from_args();
+    } = Args::parse();
 
     let msg = Arc::new(RwLock::new(String::new()));
     let c_lock = Arc::clone(&msg);

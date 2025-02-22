@@ -1,3 +1,4 @@
+use reqwest::Url;
 use std::io::{self, ErrorKind};
 use std::net::SocketAddr;
 use std::sync::{Arc, RwLock};
@@ -7,10 +8,12 @@ use tokio::io::Interest;
 use tokio::net::{TcpSocket, TcpStream};
 
 pub struct P2PTalker {
+    is_node: bool,
     stream: TcpStream,
+    queue: Vec<Url>,
 }
 impl P2PTalker {
-    pub async fn new(dst_addr: String, dst_port: usize, bind_port: usize) -> Self {
+    pub async fn new(dst_addr: String, dst_port: usize, bind_port: usize, is_node: bool) -> Self {
         let socket = TcpSocket::new_v4().unwrap();
         let bind_str: SocketAddr = format!("0.0.0.0:{}", bind_port)
             .parse::<SocketAddr>()
@@ -28,12 +31,20 @@ impl P2PTalker {
             .await
             .unwrap();
 
-        P2PTalker { stream }
+        P2PTalker {
+            stream,
+            queue: Vec::new(),
+            is_node,
+        }
     }
 
-    pub async fn talk(&mut self, msg: Arc<RwLock<String>>) -> io::Result<()> {
+    pub fn add_req(&mut self, url: String) {
+        self.queue.push(Url::parse(&url).unwrap());
+    }
+
+    pub async fn talk(&mut self) -> io::Result<()> {
         loop {
-            thread::sleep(Duration::from_millis(2000));
+            thread::sleep(Duration::from_millis(100));
             let ready = self
                 .stream
                 .ready(Interest::READABLE | Interest::WRITABLE)
@@ -41,37 +52,38 @@ impl P2PTalker {
                 .unwrap();
 
             if ready.is_readable() {
-                let mut data = vec![0; 1024];
-                // Try to read data, this may still fail with `WouldBlock`
-                // if the readiness event is a false positive.
-                match self.stream.try_read(&mut data) {
-                    Ok(n) => {
-                        data.truncate(n);
-                        println!("Собеседник: {}", String::from_utf8_lossy(data.as_slice()));
-                        continue;
-                    }
-                    Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
-                        continue;
-                    }
-                    Err(e) => {
-                        return Err(e.into());
+                if self.is_node {
+                    let mut req = Vec::new();
+                    // Try to read data, this may still fail with `WouldBlock`
+                    // if the readiness event is a false positive.
+                    match self.stream.try_read(&mut req) {
+                        Ok(n) => {
+                            req.truncate(n);
+                            self.queue
+                                .push(Url::parse(&String::from_utf8(req).unwrap()).unwrap());
+                            continue;
+                        }
+                        Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+                            continue;
+                        }
+                        Err(e) => {
+                            return Err(e.into());
+                        }
                     }
                 }
             }
 
             if ready.is_writable() {
-                // Try to write data, this may still fail with `WouldBlock`
-                // if the readiness event is a false positive.
-                // let mut msg = "xuy".to_string();
-                let msg = match msg.try_read() {
-                    Ok(v) => v,
-                    Err(_) => continue,
-                };
-                match self.stream.try_write(msg.as_bytes()) {
-                    Ok(_) => {}
-                    Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
-                    Err(e) => {
-                        return Err(e.into());
+                if self.is_node && !self.queue.is_empty() {
+                    let url = self.queue.pop().unwrap();
+                    let data = reqwest::get(url).await.unwrap().bytes().await.unwrap();
+
+                    match self.stream.try_write(&data) {
+                        Ok(_) => {}
+                        Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
+                        Err(e) => {
+                            return Err(e.into());
+                        }
                     }
                 }
             }
