@@ -52,15 +52,15 @@ impl P2PTalker {
                 .unwrap();
 
             if ready.is_readable() {
-                if self.is_node {
+                if !self.is_node {
                     let mut req = Vec::new();
                     // Try to read data, this may still fail with `WouldBlock`
                     // if the readiness event is a false positive.
                     match self.stream.try_read(&mut req) {
                         Ok(n) => {
                             req.truncate(n);
-                            self.queue
-                                .push(Url::parse(&String::from_utf8(req).unwrap()).unwrap());
+
+                            println!("Recieved data {:?}", req);
                             continue;
                         }
                         Err(ref e) if e.kind() == ErrorKind::WouldBlock => {

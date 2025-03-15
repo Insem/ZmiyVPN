@@ -1,11 +1,5 @@
 use clap::Parser;
 use p2p::P2PTalker;
-use std::{
-    io,
-    sync::{Arc, RwLock},
-    thread,
-    time::Duration,
-};
 
 mod client;
 mod p2p;
@@ -16,6 +10,10 @@ struct Args {
     dst_addr: String,
     dst_port: usize,
     bind_port: usize,
+    #[arg(short, requires("is_node"))]
+    url: Option<String>,
+    #[arg(short, long)]
+    is_node: Option<bool>,
 }
 
 #[tokio::main]
@@ -24,23 +22,13 @@ async fn main() {
         dst_port,
         dst_addr,
         bind_port,
+        url,
+        is_node,
     } = Args::parse();
 
-    let msg = Arc::new(RwLock::new(String::new()));
-    let c_lock = Arc::clone(&msg);
-    thread::spawn(move || loop {
-        thread::sleep(Duration::from_millis(100));
-
-        let mut msg = match c_lock.try_write() {
-            Ok(v) => v,
-            Err(_) => continue,
-        };
-        msg.clear();
-        io::stdin()
-            .read_line(&mut msg)
-            .expect("error: unable to read user input");
-    });
-
-    let mut p2p = P2PTalker::new(dst_addr, dst_port, bind_port).await;
-    p2p.talk(msg).await.unwrap();
+    let mut p2p = P2PTalker::new(dst_addr, dst_port, bind_port, is_node.unwrap_or(false)).await;
+    if url.is_some() {
+        p2p.add_req(url.unwrap());
+    };
+    p2p.talk().await.unwrap();
 }
