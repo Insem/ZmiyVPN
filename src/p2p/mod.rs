@@ -56,12 +56,12 @@ impl P2PTalker {
 
             if ready.is_readable() {
                 if !self.is_node {
-                    let mut req = [0; 4096];
+                    let mut req = [0; 4096 * 32];
                     // Try to read data, this may still fail with `WouldBlock`
                     // if the readiness event is a false positive.
                     match self.stream.try_read(&mut req) {
                         Ok(n) => {
-                            println!("Recieved data {:?} {:?}", req, n);
+                            println!("Recieved data {:?} {:?}", String::from_utf8_lossy(&req), n);
                             //req.truncate(n);
 
                             continue;
@@ -81,10 +81,7 @@ impl P2PTalker {
                     let url = self.queue.last().unwrap().clone();
                     let data = reqwest::get(url).await.unwrap().bytes().await.unwrap();
 
-                    match self
-                        .stream
-                        .try_write("Elisey ne viebal motuznuyu\n".as_bytes())
-                    {
+                    match self.stream.try_write(&data) {
                         Ok(_) => {
                             println!("--Write");
                         }
