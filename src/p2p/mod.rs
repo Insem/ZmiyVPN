@@ -46,7 +46,7 @@ impl P2PTalker {
     pub async fn talk(&mut self) -> io::Result<()> {
         println!("Start Talk");
         loop {
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(2000));
             let ready = self
                 .stream
                 .ready(Interest::READABLE | Interest::WRITABLE)
