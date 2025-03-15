@@ -19,8 +19,8 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let Args {
-        dst_port,
         dst_addr,
+        dst_port,
         bind_port,
         url,
         is_node,

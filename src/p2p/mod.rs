@@ -14,6 +14,7 @@ pub struct P2PTalker {
 }
 impl P2PTalker {
     pub async fn new(dst_addr: String, dst_port: usize, bind_port: usize, is_node: bool) -> Self {
+        println!("--Arhs {:?} {:?} {:?}", dst_addr, dst_port, bind_port);
         let socket = TcpSocket::new_v4().unwrap();
         let bind_str: SocketAddr = format!("0.0.0.0:{}", bind_port)
             .parse::<SocketAddr>()
