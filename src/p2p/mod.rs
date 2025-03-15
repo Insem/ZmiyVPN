@@ -47,6 +47,7 @@ impl P2PTalker {
         println!("Start Talk");
         loop {
             thread::sleep(Duration::from_millis(2000));
+            println!("--Work");
             let ready = self
                 .stream
                 .ready(Interest::READABLE | Interest::WRITABLE)
