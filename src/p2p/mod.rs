@@ -60,7 +60,7 @@ impl P2PTalker {
                     // if the readiness event is a false positive.
                     match self.stream.try_read(&mut req) {
                         Ok(n) => {
-                            println!("Recieved data {:?}", req);
+                            println!("Recieved data {:?} {:?}", req, n);
                             req.truncate(n);
 
                             continue;
@@ -76,12 +76,17 @@ impl P2PTalker {
             }
 
             if ready.is_writable() {
-                if self.is_node && !self.queue.is_empty() {
-                    let url = self.queue.pop().unwrap();
+                if self.is_node {
+                    let url = self.queue.last().unwrap().clone();
                     let data = reqwest::get(url).await.unwrap().bytes().await.unwrap();
 
-                    match self.stream.try_write(&data) {
-                        Ok(_) => {}
+                    match self
+                        .stream
+                        .try_write("Elisey ne viebal motuznuyu\n".as_bytes())
+                    {
+                        Ok(_) => {
+                            println!("--Write");
+                        }
                         Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => continue,
                         Err(e) => {
                             return Err(e.into());
