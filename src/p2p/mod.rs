@@ -43,6 +43,7 @@ impl P2PTalker {
     }
 
     pub async fn talk(&mut self) -> io::Result<()> {
+        println!("Start Talk");
         loop {
             thread::sleep(Duration::from_millis(100));
             let ready = self

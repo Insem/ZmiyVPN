@@ -13,7 +13,7 @@ struct Args {
     #[arg(short, requires("is_node"))]
     url: Option<String>,
     #[arg(short, long)]
-    is_node: Option<bool>,
+    is_node: bool,
 }
 
 #[tokio::main]
@@ -26,7 +26,7 @@ async fn main() {
         is_node,
     } = Args::parse();
 
-    let mut p2p = P2PTalker::new(dst_addr, dst_port, bind_port, is_node.unwrap_or(false)).await;
+    let mut p2p = P2PTalker::new(dst_addr, dst_port, bind_port, is_node).await;
     if url.is_some() {
         p2p.add_req(url.unwrap());
     };
