@@ -60,9 +60,9 @@ impl P2PTalker {
                     // if the readiness event is a false positive.
                     match self.stream.try_read(&mut req) {
                         Ok(n) => {
+                            println!("Recieved data {:?}", req);
                             req.truncate(n);
 
-                            println!("Recieved data {:?}", req);
                             continue;
                         }
                         Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
